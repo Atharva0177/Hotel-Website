@@ -1,0 +1,281 @@
+{% extends "admin/admin-base.html" %}
+
+{% block page_title %}Manage Rooms{% endblock %}
+
+{% block content %}
+<div class="admin-toolbar">
+    <button onclick="openAddRoomModal()" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add New Room
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Price</th>
+                <th>Capacity</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in rooms %}
+            <tr>
+                <td>#{{ room.id }}</td>
+                <td>
+                    <img src="{{ room.images | from_json | first }}" alt="{{ room.name }}" class="table-img">
+                </td>
+                <td>{{ room.name }}</td>
+                <td><span class="type-badge">{{ room.type }}</span></td>
+                <td>${{ "%.2f"|format(room.price) }}</td>
+                <td>{{ room.capacity }}</td>
+                <td>
+                    <span class="status-badge {% if room.available %}status-confirmed{% else %}status-cancelled{% endif %}">
+                        {% if room.available %}Available{% else %}Unavailable{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button onclick='openEditRoomModal({{ room.id }}, {{ room.name | tojson }}, "{{ room.type }}", {{ room.price }}, {{ room.capacity }}, {{ room.description | tojson }}, {{ room.amenities | tojson }}, {{ room.images | tojson }}, {{ room.videos | tojson }}, {{ room.available | tojson }})' class="btn-icon btn-edit" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteRoom({{ room.id }}, {{ room.name | tojson }})" class="btn-icon btn-delete" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">No rooms found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Room Modal -->
+<div id="addRoomModal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Room</h3>
+                <button class="modal-close" onclick="closeAddRoomModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form action="{{ url_for('add_room') }}" method="POST">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Room Name *</label>
+                        <input type="text" name="name" required placeholder="e.g., Deluxe Ocean View Suite">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Type *</label>
+                            <select name="type" required>
+                                <option value="Standard">Standard</option>
+                                <option value="Business">Business</option>
+                                <option value="Family">Family</option>
+                                <option value="Suite">Suite</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Price per Night *</label>
+                            <input type="number" name="price" step="0.01" required placeholder="199.99">
+                        </div>
+                        <div class="form-group">
+                            <label>Capacity *</label>
+                            <input type="number" name="capacity" required placeholder="2">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description *</label>
+                        <textarea name="description" rows="3" required placeholder="Describe the room..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Amenities (JSON Array) *</label>
+                        <textarea name="amenities" rows="2" required placeholder='["King Bed", "WiFi", "Ocean View", "Mini Bar"]'>["WiFi", "TV", "Air Conditioning"]</textarea>
+                        <small>Enter amenities as JSON array</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Images URLs (JSON Array) *</label>
+                        <textarea name="images" rows="3" required placeholder='["https://images.unsplash.com/photo-xxx", "https://..."]'>["https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800"]</textarea>
+                        <small>Enter image URLs as JSON array (use Unsplash, Pexels, etc.)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Video URLs (JSON Array)</label>
+                        <textarea name="videos" rows="2" placeholder='["https://player.vimeo.com/video/xxx"]'>[]</textarea>
+                        <small>Optional: Enter video URLs as JSON array</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="available" value="true" checked>
+                            <span>Available for booking</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="closeAddRoomModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Room Modal -->
+<div id="editRoomModal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Room</h3>
+                <button class="modal-close" onclick="closeEditRoomModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editRoomForm" method="POST">
+                <div class="modal-body" id="editRoomContent">
+                    <!-- Content loaded dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="closeEditRoomModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAddRoomModal() {
+    document.getElementById('addRoomModal').style.display = 'flex';
+}
+
+function closeAddRoomModal() {
+    document.getElementById('addRoomModal').style.display = 'none';
+}
+
+function openEditRoomModal(roomId, name, type, price, capacity, description, amenities, images, videos, available) {
+    const form = document.getElementById('editRoomForm');
+    form.action = `/admin/room/edit/${roomId}`;
+    
+    // Escape HTML for safe display
+    const escapedDescription = escapeHtml(description);
+    
+    const content = `
+        <div class="form-group">
+            <label>Room Name *</label>
+            <input type="text" name="name" value="${escapeHtml(name)}" required>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Type *</label>
+                <select name="type" required>
+                    <option value="Standard" ${type === 'Standard' ? 'selected' : ''}>Standard</option>
+                    <option value="Business" ${type === 'Business' ? 'selected' : ''}>Business</option>
+                    <option value="Family" ${type === 'Family' ? 'selected' : ''}>Family</option>
+                    <option value="Suite" ${type === 'Suite' ? 'selected' : ''}>Suite</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Price per Night *</label>
+                <input type="number" name="price" step="0.01" value="${price}" required>
+            </div>
+            <div class="form-group">
+                <label>Capacity *</label>
+                <input type="number" name="capacity" value="${capacity}" required>
+            </div>
+            <!-- Add after the capacity field -->
+            <div class="form-group">
+                <label>Total Available Rooms *</label>
+                <input type="number" name="total_rooms" value="5" required placeholder="5">
+                <small>Number of rooms of this type available</small>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Description *</label>
+            <textarea name="description" rows="3" required>${escapedDescription}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Amenities (JSON Array) *</label>
+            <textarea name="amenities" rows="2" required>${escapeHtml(amenities)}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Images URLs (JSON Array) *</label>
+            <textarea name="images" rows="3" required>${escapeHtml(images)}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Video URLs (JSON Array)</label>
+            <textarea name="videos" rows="2">${escapeHtml(videos || '[]')}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="available" value="true" ${available ? 'checked' : ''}>
+                <span>Available for booking</span>
+            </label>
+        </div>
+    `;
+    
+    document.getElementById('editRoomContent').innerHTML = content;
+    document.getElementById('editRoomModal').style.display = 'flex';
+}
+
+function closeEditRoomModal() {
+    document.getElementById('editRoomModal').style.display = 'none';
+}
+
+function deleteRoom(roomId, roomName) {
+    if (confirm(`Are you sure you want to delete "${roomName}"? This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/room/delete/${roomId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function escapeHtml(text) {
+    if (typeof text !== 'string') {
+        text = String(text);
+    }
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Close modals on outside click
+window.onclick = function(event) {
+    const addModal = document.getElementById('addRoomModal');
+    const editModal = document.getElementById('editRoomModal');
+    if (event.target === addModal) {
+        closeAddRoomModal();
+    }
+    if (event.target === editModal) {
+        closeEditRoomModal();
+    }
+}
+</script>
+{% endblock %}

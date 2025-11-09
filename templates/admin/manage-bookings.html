@@ -1,0 +1,270 @@
+{% extends "admin/admin-base.html" %}
+
+{% block page_title %}Manage Bookings{% endblock %}
+
+{% block content %}
+<div class="admin-toolbar">
+    <div class="filter-buttons">
+        <a href="{{ url_for('admin_bookings', status='all') }}" class="filter-btn {% if current_status == 'all' %}active{% endif %}">
+            All Bookings
+        </a>
+        <a href="{{ url_for('admin_bookings', status='pending') }}" class="filter-btn {% if current_status == 'pending' %}active{% endif %}">
+            Pending
+        </a>
+        <a href="{{ url_for('admin_bookings', status='confirmed') }}" class="filter-btn {% if current_status == 'confirmed' %}active{% endif %}">
+            Confirmed
+        </a>
+        <a href="{{ url_for('admin_bookings', status='cancelled') }}" class="filter-btn {% if current_status == 'cancelled' %}active{% endif %}">
+            Cancelled
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Guest Info</th>
+                <th>Room(s)</th>
+                <th>Check-in</th>
+                <th>Check-out</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>#{{ booking.id }}</td>
+                <td>
+                    <div class="guest-info">
+                        <strong>{{ booking.guest_name }}</strong><br>
+                        <small>{{ booking.guest_email }}</small><br>
+                        <small>{{ booking.guest_phone }}</small>
+                    </div>
+                </td>
+                <td>
+                    {% if booking.items %}
+                        {{ booking.items | length }} room(s)
+                    {% elif booking.room %}
+                        {{ booking.room.name }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td>{{ booking.check_in.strftime('%Y-%m-%d') }}</td>
+                <td>{{ booking.check_out.strftime('%Y-%m-%d') }}</td>
+                <td><strong>${{ "%.2f"|format(booking.total_price) }}</strong></td>
+                <td>
+                    <form action="{{ url_for('update_booking_status', booking_id=booking.id) }}" method="POST" class="inline-form">
+                        <select name="status" onchange="this.form.submit()" class="status-select status-{{ booking.status }}">
+                            <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button onclick="viewBookingDetails({{ booking.id }})" class="btn-icon btn-info" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="deleteBooking({{ booking.id }}, '{{ booking.guest_name | replace("'", "\\'") }}')" class="btn-icon btn-delete" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">No bookings found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Booking Details Modal -->
+<div id="bookingDetailsModal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Booking Details</h3>
+                <button class="modal-close" onclick="closeBookingDetailsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeBookingDetailsModal()" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Store bookings data for JavaScript access
+const bookingsData = {
+    {% for booking in bookings %}
+    {{ booking.id }}: {
+        id: {{ booking.id }},
+        guest_name: {{ booking.guest_name | tojson }},
+        guest_email: {{ booking.guest_email | tojson }},
+        guest_phone: {{ booking.guest_phone | tojson }},
+        check_in: "{{ booking.check_in.strftime('%Y-%m-%d') }}",
+        check_out: "{{ booking.check_out.strftime('%Y-%m-%d') }}",
+        total_price: {{ booking.total_price }},
+        status: "{{ booking.status }}",
+        created_at: "{{ booking.created_at.strftime('%Y-%m-%d %H:%M:%S') }}",
+        special_requests: {{ booking.special_requests | tojson }},
+        {% if booking.items %}
+        items: [
+            {% for item in booking.items %}
+            {
+                room_name: {{ item.room.name | tojson }},
+                room_type: "{{ item.room.type }}",
+                room_capacity: {{ item.room.capacity }},
+                quantity: {{ item.quantity }},
+                guests: {{ item.guests }},
+                price_per_night: {{ item.price_per_night }},
+                subtotal: {{ item.subtotal }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        is_multi_room: true
+        {% elif booking.room %}
+        room: {
+            name: {{ booking.room.name | tojson }},
+            type: "{{ booking.room.type }}",
+            capacity: {{ booking.room.capacity }}
+        },
+        guests: {{ booking.guests or 0 }},
+        is_multi_room: false
+        {% else %}
+        is_multi_room: false
+        {% endif %}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+};
+
+function viewBookingDetails(bookingId) {
+    const booking = bookingsData[bookingId];
+    if (!booking) {
+        alert('Booking data not found');
+        return;
+    }
+    
+    const checkIn = new Date(booking.check_in);
+    const checkOut = new Date(booking.check_out);
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    
+    let content = `
+        <div class="booking-details-grid">
+            <div class="detail-section">
+                <h4><i class="fas fa-user"></i> Guest Information</h4>
+                <p><strong>Name:</strong> ${escapeHtml(booking.guest_name)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(booking.guest_email)}</p>
+                <p><strong>Phone:</strong> ${escapeHtml(booking.guest_phone)}</p>
+            </div>
+            
+            <div class="detail-section">
+                <h4><i class="fas fa-bed"></i> Room Information</h4>
+    `;
+    
+    if (booking.is_multi_room && booking.items) {
+        booking.items.forEach((item, index) => {
+            content += `
+                <div style="margin-bottom: 15px; padding: 10px; background: #f5f7fa; border-radius: 8px;">
+                    <p><strong>${escapeHtml(item.room_name)}</strong> (${escapeHtml(item.room_type)})</p>
+                    <p><i class="fas fa-door-open"></i> ${item.quantity} room(s)</p>
+                    <p><i class="fas fa-users"></i> ${item.guests} guest(s) per room</p>
+                    <p><i class="fas fa-dollar-sign"></i> $${item.subtotal.toFixed(2)}</p>
+                </div>
+            `;
+        });
+    } else if (booking.room) {
+        content += `
+            <p><strong>Room:</strong> ${escapeHtml(booking.room.name)}</p>
+            <p><strong>Type:</strong> ${escapeHtml(booking.room.type)}</p>
+            <p><strong>Capacity:</strong> ${booking.room.capacity} guests</p>
+            <p><strong>Guests:</strong> ${booking.guests}</p>
+        `;
+    } else {
+        content += `<p><em>Room information not available</em></p>`;
+    }
+    
+    content += `
+            </div>
+            
+            <div class="detail-section">
+                <h4><i class="fas fa-calendar"></i> Stay Details</h4>
+                <p><strong>Check-in:</strong> ${booking.check_in}</p>
+                <p><strong>Check-out:</strong> ${booking.check_out}</p>
+                <p><strong>Nights:</strong> ${nights}</p>
+            </div>
+            
+            <div class="detail-section">
+                <h4><i class="fas fa-dollar-sign"></i> Payment Information</h4>
+                <p><strong>Total Amount:</strong> $${booking.total_price.toFixed(2)}</p>
+                <p><strong>Status:</strong> <span class="status-badge status-${booking.status}">${booking.status}</span></p>
+                <p><strong>Booked on:</strong> ${booking.created_at}</p>
+            </div>
+    `;
+    
+    if (booking.special_requests && booking.special_requests.trim() !== '') {
+        content += `
+            <div class="detail-section full-width">
+                <h4><i class="fas fa-comment"></i> Special Requests</h4>
+                <p>${escapeHtml(booking.special_requests)}</p>
+            </div>
+        `;
+    }
+    
+    content += '</div>';
+    
+    document.getElementById('bookingDetailsContent').innerHTML = content;
+    document.getElementById('bookingDetailsModal').style.display = 'flex';
+}
+
+function closeBookingDetailsModal() {
+    document.getElementById('bookingDetailsModal').style.display = 'none';
+}
+
+function deleteBooking(bookingId, guestName) {
+    if (confirm(`Are you sure you want to delete the booking for ${guestName}? This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/booking/delete/${bookingId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+// Close modal on outside click
+window.onclick = function(event) {
+    const modal = document.getElementById('bookingDetailsModal');
+    if (event.target === modal) {
+        closeBookingDetailsModal();
+    }
+}
+
+// Debug: Log bookings data on page load
+console.log('Bookings data loaded:', Object.keys(bookingsData).length, 'bookings');
+</script>
+{% endblock %}

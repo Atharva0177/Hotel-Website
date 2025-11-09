@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Book {{ room.name }} - Grand Luxury Hotel{% endblock %}
+
+{% block content %}
+<section class="booking-page">
+    <div class="container">
+        <div class="booking-grid">
+            <div class="booking-form-section">
+                <h1 class="booking-title">Complete Your Booking</h1>
+                <p class="booking-subtitle">You're one step away from your dream vacation</p>
+                
+                <form action="{{ url_for('book_room') }}" method="POST" id="bookingForm" class="booking-form-full">
+                    <input type="hidden" name="room_id" value="{{ room.id }}">
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-calendar"></i> Stay Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="check_in">Check-in Date *</label>
+                                <input type="date" id="check_in" name="check_in" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="check_out">Check-out Date *</label>
+                                <input type="date" id="check_out" name="check_out" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="guests">Number of Guests *</label>
+                            <select id="guests" name="guests" required>
+                                {% for i in range(1, room.capacity + 1) %}
+                                <option value="{{ i }}">{{ i }} Guest{% if i > 1 %}s{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-user"></i> Guest Information</h3>
+                        <div class="form-group">
+                            <label for="guest_name">Full Name *</label>
+                            <input type="text" id="guest_name" name="guest_name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="guest_email">Email Address *</label>
+                                <input type="email" id="guest_email" name="guest_email" required placeholder="john@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="guest_phone">Phone Number *</label>
+                                <input type="tel" id="guest_phone" name="guest_phone" required placeholder="+1 (555) 123-4567">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-comment"></i> Special Requests</h3>
+                        <div class="form-group">
+                            <label for="special_requests">Any special requests or requirements?</label>
+                            <textarea id="special_requests" name="special_requests" rows="4" placeholder="Let us know if you have any special requirements..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" required>
+                            <span>I agree to the <a href="#">terms and conditions</a> and <a href="#">cancellation policy</a></span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">
+                        <i class="fas fa-check-circle"></i> Confirm Booking
+                    </button>
+                </form>
+            </div>
+            
+            <div class="booking-summary-section">
+                <div class="booking-summary-card">
+                    <h3>Booking Summary</h3>
+                    
+                    <div class="summary-room">
+                        <img src="{{ room.images | from_json | first }}" alt="{{ room.name }}">
+                        <div>
+                            <h4>{{ room.name }}</h4>
+                            <p><i class="fas fa-tag"></i> {{ room.type }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-details">
+                        <div class="summary-row">
+                            <span><i class="fas fa-calendar-check"></i> Check-in</span>
+                            <span id="displayCheckIn">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span><i class="fas fa-calendar-times"></i> Check-out</span>
+                            <span id="displayCheckOut">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span><i class="fas fa-moon"></i> Nights</span>
+                            <span id="displayNights">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span><i class="fas fa-users"></i> Guests</span>
+                            <span id="displayGuests">1</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-divider"></div>
+                    
+                    <div class="summary-pricing">
+                        <div class="summary-row">
+                            <span>${{ "%.2f"|format(room.price) }} x <span id="priceNights">1</span> night(s)</span>
+                            <span id="priceSubtotal">${{ "%.2f"|format(room.price) }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Service fee (10%)</span>
+                            <span id="priceServiceFee">${{ "%.2f"|format(room.price * 0.1) }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Taxes (8%)</span>
+                            <span id="priceTax">${{ "%.2f"|format(room.price * 0.08) }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-divider"></div>
+                    
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span id="priceTotal">${{ "%.2f"|format(room.price * 1.18) }}</span>
+                    </div>
+                    
+                    <div class="summary-features">
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Secure Payment</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-ban"></i>
+                            <span>Free Cancellation</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Instant Confirmation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+<script>
+const roomPrice = {{ room.price }};
+
+// Set minimum date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('check_in').setAttribute('min', today);
+document.getElementById('check_out').setAttribute('min', today);
+
+// Update summary on date change
+document.getElementById('check_in').addEventListener('change', updateSummary);
+document.getElementById('check_out').addEventListener('change', updateSummary);
+document.getElementById('guests').addEventListener('change', updateSummary);
+
+function updateSummary() {
+    const checkIn = document.getElementById('check_in').value;
+    const checkOut = document.getElementById('check_out').value;
+    const guests = document.getElementById('guests').value;
+    
+    document.getElementById('displayCheckIn').textContent = checkIn || '-';
+    document.getElementById('displayCheckOut').textContent = checkOut || '-';
+    document.getElementById('displayGuests').textContent = guests;
+    
+    if (checkIn && checkOut) {
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkOut);
+        const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+        
+        if (nights > 0) {
+            document.getElementById('displayNights').textContent = nights;
+            document.getElementById('priceNights').textContent = nights;
+            
+            const subtotal = nights * roomPrice;
+            const serviceFee = subtotal * 0.1;
+            const tax = subtotal * 0.08;
+            const total = subtotal + serviceFee + tax;
+            
+            document.getElementById('priceSubtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('priceServiceFee').textContent = '$' + serviceFee.toFixed(2);
+            document.getElementById('priceTax').textContent = '$' + tax.toFixed(2);
+            document.getElementById('priceTotal').textContent = '$' + total.toFixed(2);
+        }
+    }
+}
+</script>
+{% endblock %}

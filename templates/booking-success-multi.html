@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Confirmed - Grand Luxury Hotel{% endblock %}
+
+{% block content %}
+<section class="success-page">
+    <div class="container">
+        <div class="success-content">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1 class="success-title">Booking Confirmed!</h1>
+            <p class="success-message">Thank you for choosing Grand Luxury Hotel. Your booking has been confirmed.</p>
+            
+            <div class="booking-details-card">
+                <h3>Booking Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value">#{{ booking.id }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Guest Name:</span>
+                    <span class="detail-value">{{ booking.guest_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ booking.guest_email }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">{{ booking.guest_phone }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Check-in:</span>
+                    <span class="detail-value">{{ booking.check_in.strftime('%B %d, %Y') }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Check-out:</span>
+                    <span class="detail-value">{{ booking.check_out.strftime('%B %d, %Y') }}</span>
+                </div>
+                
+                <div class="detail-section">
+                    <h4><i class="fas fa-bed"></i> Rooms Booked</h4>
+                    {% if booking.items %}
+                        {% for item in booking.items %}
+                        <div class="booked-room-item">
+                            <div class="booked-room-header">
+                                <strong>{{ item.room.name }}</strong>
+                                <span class="room-type-badge-small">{{ item.room.type }}</span>
+                            </div>
+                            <div class="booked-room-details">
+                                <span><i class="fas fa-door-open"></i> {{ item.quantity }} room(s)</span>
+                                <span><i class="fas fa-users"></i> {{ item.guests }} guest(s) per room</span>
+                                <span><i class="fas fa-dollar-sign"></i> ${{ "%.2f"|format(item.subtotal) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Backward compatibility for old single-room bookings -->
+                        <div class="booked-room-item">
+                            <div class="booked-room-header">
+                                <strong>{{ booking.room.name }}</strong>
+                            </div>
+                            <div class="booked-room-details">
+                                <span><i class="fas fa-users"></i> {{ booking.guests }} guest(s)</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="detail-row total-row">
+                    <span class="detail-label">Total Amount:</span>
+                    <span class="detail-value">${{ "%.2f"|format(booking.total_price) }}</span>
+                </div>
+            </div>
+            
+            <div class="success-info">
+                <p><i class="fas fa-envelope"></i> A confirmation email has been sent to <strong>{{ booking.guest_email }}</strong></p>
+                <p><i class="fas fa-info-circle"></i> You can cancel your booking free of charge up to 48 hours before check-in</p>
+            </div>
+            
+            <div class="success-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+                <a href="{{ url_for('booking_select') }}" class="btn btn-secondary">
+                    <i class="fas fa-bed"></i> Book More Rooms
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.detail-section {
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--bg-light);
+    border-radius: 10px;
+}
+
+.detail-section h4 {
+    margin: 0 0 15px 0;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.booked-room-item {
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.booked-room-item:last-child {
+    margin-bottom: 0;
+}
+
+.booked-room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.booked-room-header strong {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+}
+
+.room-type-badge-small {
+    background: var(--gold-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.booked-room-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.booked-room-details span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.booked-room-details i {
+    color: var(--accent-color);
+}
+</style>
+{% endblock %}

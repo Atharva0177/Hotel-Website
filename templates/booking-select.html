@@ -1,0 +1,643 @@
+{% extends "base.html" %}
+
+{% block title %}Select Rooms - Grand Luxury Hotel{% endblock %}
+
+{% block content %}
+<section class="booking-select-page">
+    <div class="container">
+        <div class="page-header-simple">
+            <h1>Select Your Rooms</h1>
+            <p>Choose one or multiple rooms for your perfect stay</p>
+        </div>
+        
+        <div class="booking-select-grid">
+            <!-- Room Selection Section -->
+            <div class="rooms-selection">
+                <div class="selection-header">
+                    <h2><i class="fas fa-bed"></i> Available Rooms</h2>
+                    <div class="date-selector">
+                        <div class="form-group-inline">
+                            <label><i class="fas fa-calendar"></i> Check-in</label>
+                            <input type="date" id="checkInDate" required>
+                        </div>
+                        <div class="form-group-inline">
+                            <label><i class="fas fa-calendar"></i> Check-out</label>
+                            <input type="date" id="checkOutDate" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rooms-list">
+                    {% for room in rooms %}
+                    <div class="room-select-card" data-room-id="{{ room.id }}">
+                        <div class="room-select-image">
+                            <img src="{{ room.images | from_json | first }}" alt="{{ room.name }}">
+                            <span class="room-type-badge">{{ room.type }}</span>
+                        </div>
+                        <div class="room-select-info">
+                            <h3>{{ room.name }}</h3>
+                            <p class="room-desc">{{ room.description[:80] }}...</p>
+                            <div class="room-meta">
+                                <span><i class="fas fa-users"></i> Up to {{ room.capacity }} guests</span>
+                                <span><i class="fas fa-door-open"></i> {{ room.total_rooms }} available</span>
+                            </div>
+                            <div class="room-price-select">
+                                <div class="price-display">
+                                    <span class="price">${{ "%.2f"|format(room.price) }}</span>
+                                    <span class="per-night">/night</span>
+                                </div>
+                                <div class="quantity-selector">
+                                    <button class="qty-btn" onclick="decreaseQuantity({{ room.id }})">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="number" id="qty-{{ room.id }}" class="qty-input" value="0" min="0" max="{{ room.total_rooms }}" readonly>
+                                    <button class="qty-btn" onclick="increaseQuantity({{ room.id }}, {{ room.total_rooms }})">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="guests-selector" id="guests-container-{{ room.id }}" style="display: none;">
+                                <label>Guests per room:</label>
+                                <select id="guests-{{ room.id }}" class="guests-select">
+                                    {% for i in range(1, room.capacity + 1) %}
+                                    <option value="{{ i }}">{{ i }} Guest{% if i > 1 %}s{% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Cart/Summary Section -->
+            <div class="booking-cart">
+                <div class="cart-sticky">
+                    <h3><i class="fas fa-shopping-cart"></i> Your Selection</h3>
+                    
+                    <div id="cartEmpty" class="cart-empty">
+                        <i class="fas fa-bed"></i>
+                        <p>No rooms selected</p>
+                        <small>Add rooms from the left</small>
+                    </div>
+                    
+                    <div id="cartItems" class="cart-items" style="display: none;">
+                        <!-- Cart items will be added here -->
+                    </div>
+                    
+                    <div id="cartSummary" class="cart-summary" style="display: none;">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="cartSubtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Service Fee (10%):</span>
+                            <span id="cartServiceFee">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tax (8%):</span>
+                            <span id="cartTax">$0.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span id="cartTotal">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <button id="proceedBtn" class="btn btn-primary btn-block" onclick="proceedToBooking()" disabled>
+                        <i class="fas fa-arrow-right"></i> Proceed to Booking
+                    </button>
+                    
+                    <div class="cart-features">
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Secure Booking</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-ban"></i>
+                            <span>Free Cancellation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.booking-select-page {
+    padding: 100px 0 60px;
+    background: #f5f7fa;
+}
+
+.page-header-simple {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header-simple h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.booking-select-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+.rooms-selection {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.selection-header {
+    margin-bottom: 30px;
+}
+
+.selection-header h2 {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.date-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.room-select-card {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 20px;
+    padding: 20px;
+    border: 2px solid #e8e8e8;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.room-select-card:hover {
+    border-color: var(--secondary-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.room-select-card.selected {
+    border-color: var(--secondary-color);
+    background: #fff5f5;
+}
+
+.room-select-image {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.room-select-image img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.room-type-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--gold-color);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.room-select-info h3 {
+    font-size: 1.3rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.room-desc {
+    color: var(--text-light);
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.room-meta {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.room-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.room-meta i {
+    color: var(--accent-color);
+}
+
+.room-price-select {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-top: 1px solid #e8e8e8;
+}
+
+.price-display .price {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+}
+
+.per-night {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.qty-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-color);
+    background: white;
+    color: var(--accent-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.qty-btn:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.qty-input {
+    width: 60px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.guests-selector {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.guests-selector label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.guests-select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.booking-cart {
+    position: relative;
+}
+
+.cart-sticky {
+    position: sticky;
+    top: 100px;
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.cart-sticky h3 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cart-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-light);
+}
+
+.cart-empty i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.3;
+}
+
+.cart-items {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.cart-item {
+    padding: 15px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.cart-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.cart-item-remove {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.cart-item-remove:hover {
+    color: var(--secondary-color);
+}
+
+.cart-item-details {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.cart-item-price {
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-top: 8px;
+}
+
+.cart-summary {
+    padding: 20px 0;
+    border-top: 2px solid #e8e8e8;
+    margin-bottom: 20px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: var(--text-dark);
+}
+
+.summary-row.total {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    padding-top: 15px;
+    border-top: 2px solid var(--primary-color);
+    margin-top: 15px;
+}
+
+.cart-features {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.feature-item i {
+    color: var(--accent-color);
+}
+
+@media (max-width: 992px) {
+    .booking-select-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cart-sticky {
+        position: static;
+    }
+    
+    .room-select-card {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Use the JSON-serializable data passed from Flask
+const roomsData = {{ rooms_json | tojson }};
+let selectedRooms = [];
+let checkIn = null;
+let checkOut = null;
+let nights = 0;
+
+// Set minimum dates
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('checkInDate').setAttribute('min', today);
+document.getElementById('checkOutDate').setAttribute('min', today);
+
+document.getElementById('checkInDate').addEventListener('change', function() {
+    checkIn = this.value;
+    const minCheckOut = new Date(this.value);
+    minCheckOut.setDate(minCheckOut.getDate() + 1);
+    document.getElementById('checkOutDate').setAttribute('min', minCheckOut.toISOString().split('T')[0]);
+    calculateNights();
+});
+
+document.getElementById('checkOutDate').addEventListener('change', function() {
+    checkOut = this.value;
+    calculateNights();
+});
+
+function calculateNights() {
+    if (checkIn && checkOut) {
+        const start = new Date(checkIn);
+        const end = new Date(checkOut);
+        nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        updateCart();
+    }
+}
+
+function increaseQuantity(roomId, maxRooms) {
+    if (!checkIn || !checkOut) {
+        alert('Please select check-in and check-out dates first');
+        return;
+    }
+    
+    const input = document.getElementById(`qty-${roomId}`);
+    const current = parseInt(input.value);
+    if (current < maxRooms) {
+        input.value = current + 1;
+        updateRoomSelection(roomId);
+    }
+}
+
+function decreaseQuantity(roomId) {
+    const input = document.getElementById(`qty-${roomId}`);
+    const current = parseInt(input.value);
+    if (current > 0) {
+        input.value = current - 1;
+        updateRoomSelection(roomId);
+    }
+}
+
+function updateRoomSelection(roomId) {
+    const quantity = parseInt(document.getElementById(`qty-${roomId}`).value);
+    const guestsSelect = document.getElementById(`guests-${roomId}`);
+    const guestsContainer = document.getElementById(`guests-container-${roomId}`);
+    const card = document.querySelector(`[data-room-id="${roomId}"]`);
+    
+    if (quantity > 0) {
+        guestsContainer.style.display = 'block';
+        card.classList.add('selected');
+        
+        const room = roomsData.find(r => r.id === roomId);
+        const guests = parseInt(guestsSelect.value);
+        
+        const existingIndex = selectedRooms.findIndex(r => r.room_id === roomId);
+        if (existingIndex >= 0) {
+            selectedRooms[existingIndex] = { room_id: roomId, quantity, guests, room };
+        } else {
+            selectedRooms.push({ room_id: roomId, quantity, guests, room });
+        }
+    } else {
+        guestsContainer.style.display = 'none';
+        card.classList.remove('selected');
+        selectedRooms = selectedRooms.filter(r => r.room_id !== roomId);
+    }
+    
+    updateCart();
+}
+
+// Update guests when selection changes
+document.querySelectorAll('.guests-select').forEach(select => {
+    select.addEventListener('change', function() {
+        const roomId = parseInt(this.id.replace('guests-', ''));
+        updateRoomSelection(roomId);
+    });
+});
+
+function updateCart() {
+    const cartEmpty = document.getElementById('cartEmpty');
+    const cartItems = document.getElementById('cartItems');
+    const cartSummary = document.getElementById('cartSummary');
+    const proceedBtn = document.getElementById('proceedBtn');
+    
+    if (selectedRooms.length === 0 || nights === 0) {
+        cartEmpty.style.display = 'block';
+        cartItems.style.display = 'none';
+        cartSummary.style.display = 'none';
+        proceedBtn.disabled = true;
+        return;
+    }
+    
+    cartEmpty.style.display = 'none';
+    cartItems.style.display = 'block';
+    cartSummary.style.display = 'block';
+    proceedBtn.disabled = false;
+    
+    // Build cart items
+    let cartHTML = '';
+    let subtotal = 0;
+    
+    selectedRooms.forEach(item => {
+        const itemTotal = item.room.price * nights * item.quantity;
+        subtotal += itemTotal;
+        
+        cartHTML += `
+            <div class="cart-item">
+                <div class="cart-item-header">
+                    <span class="cart-item-name">${item.room.name}</span>
+                    <button class="cart-item-remove" onclick="removeRoom(${item.room_id})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="cart-item-details">
+                    ${item.quantity} room(s) × ${nights} night(s)<br>
+                    ${item.guests} guest(s) per room
+                </div>
+                <div class="cart-item-price">$${itemTotal.toFixed(2)}</div>
+            </div>
+        `;
+    });
+    
+    cartItems.innerHTML = cartHTML;
+    
+    // Calculate totals
+    const serviceFee = subtotal * 0.1;
+    const tax = subtotal * 0.08;
+    const total = subtotal + serviceFee + tax;
+    
+    document.getElementById('cartSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('cartServiceFee').textContent = `$${serviceFee.toFixed(2)}`;
+    document.getElementById('cartTax').textContent = `$${tax.toFixed(2)}`;
+    document.getElementById('cartTotal').textContent = `$${total.toFixed(2)}`;
+}
+
+function removeRoom(roomId) {
+    document.getElementById(`qty-${roomId}`).value = 0;
+    updateRoomSelection(roomId);
+}
+
+function proceedToBooking() {
+    if (!checkIn || !checkOut) {
+        alert('Please select check-in and check-out dates');
+        return;
+    }
+    
+    if (selectedRooms.length === 0) {
+        alert('Please select at least one room');
+        return;
+    }
+    
+    // Store data in sessionStorage
+    sessionStorage.setItem('bookingData', JSON.stringify({
+        check_in: checkIn,
+        check_out: checkOut,
+        nights: nights,
+        rooms: selectedRooms
+    }));
+    
+    window.location.href = '/booking-multi';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "admin/admin-base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-bed"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ total_rooms }}</h3>
+                <p>Total Rooms</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <i class="fas fa-door-open"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ available_rooms }}</h3>
+                <p>Available Rooms</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ total_bookings }}</h3>
+                <p>Total Bookings</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-content">
+                <h3>${{ "%.2f"|format(total_revenue) }}</h3>
+                <p>Total Revenue</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Bookings -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-calendar-alt"></i> Recent Bookings</h2>
+            <a href="{{ url_for('admin_bookings') }}" class="btn-link">View All</a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Guest Name</th>
+                        <th>Room</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in recent_bookings %}
+                    <tr>
+                        <td>#{{ booking.id }}</td>
+                        <td>{{ booking.guest_name }}</td>
+                        <td>{{ booking.room.name }}</td>
+                        <td>{{ booking.check_in.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ booking.check_out.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <span class="status-badge status-{{ booking.status }}">
+                                {{ booking.status }}
+                            </span>
+                        </td>
+                        <td>${{ "%.2f"|format(booking.total_price) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">No bookings yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+        </div>
+        
+        <div class="quick-actions">
+            <button onclick="openAddRoomModal()" class="action-btn">
+                <i class="fas fa-plus-circle"></i>
+                <span>Add New Room</span>
+            </button>
+            <a href="{{ url_for('admin_bookings') }}" class="action-btn">
+                <i class="fas fa-list"></i>
+                <span>View All Bookings</span>
+            </a>
+            <a href="{{ url_for('admin_rooms') }}" class="action-btn">
+                <i class="fas fa-cog"></i>
+                <span>Manage Rooms</span>
+            </a>
+            <a href="{{ url_for('index') }}" target="_blank" class="action-btn">
+                <i class="fas fa-globe"></i>
+                <span>View Website</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

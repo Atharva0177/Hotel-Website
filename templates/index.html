@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Grand Luxury Hotel{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-slider">
+        <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1 class="hero-title fade-in-up">Welcome to Luxury</h1>
+                <p class="hero-subtitle fade-in-up delay-1">Experience the finest hospitality</p>
+                <a href="{{ url_for('booking_select') }}" class="btn btn-primary btn-hero fade-in-up delay-2">
+                    <i class="fas fa-calendar-check"></i> Book Your Stay
+                </a>
+            </div>
+        </div>
+        <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1 class="hero-title fade-in-up">Unforgettable Moments</h1>
+                <p class="hero-subtitle fade-in-up delay-1">Create memories that last forever</p>
+                <a href="{{ url_for('booking_select') }}" class="btn btn-primary btn-hero fade-in-up delay-2">
+                    <i class="fas fa-search"></i> Explore Rooms
+                </a>
+            </div>
+        </div>
+        <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1920');">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1 class="hero-title fade-in-up">Paradise Awaits</h1>
+                <p class="hero-subtitle fade-in-up delay-1">Your dream vacation starts here</p>
+                <a href="{{ url_for('rooms') }}" class="btn btn-primary btn-hero fade-in-up delay-2">
+                    <i class="fas fa-arrow-right"></i> Discover More
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <button class="slider-btn prev" onclick="changeSlide(-1)">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="slider-btn next" onclick="changeSlide(1)">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    
+    <div class="slider-dots">
+        <span class="dot active" onclick="currentSlide(0)"></span>
+        <span class="dot" onclick="currentSlide(1)"></span>
+        <span class="dot" onclick="currentSlide(2)"></span>
+    </div>
+</section>
+
+<!-- Stats Section - Separated from Hero -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card reveal">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Happy Guests</div>
+                </div>
+            </div>
+            <div class="stat-card reveal">
+                <div class="stat-icon">
+                    <i class="fas fa-bed"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Luxury Rooms</div>
+                </div>
+            </div>
+            <div class="stat-card reveal">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">4.9★</div>
+                    <div class="stat-label">Guest Rating</div>
+                </div>
+            </div>
+            <div class="stat-card reveal">
+                <div class="stat-icon">
+                    <i class="fas fa-award"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">25+</div>
+                    <div class="stat-label">Awards Won</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modern Quick Booking Section - More Spacious -->
+<section class="quick-booking-modern">
+    <div class="container">
+        <div class="booking-card-modern-home">
+            <div class="booking-header">
+                <h3><i class="fas fa-calendar-alt"></i> Find Your Perfect Stay</h3>
+                <p>Check availability and book your dream room</p>
+            </div>
+            <form class="booking-form-modern-inline" action="{{ url_for('booking_select') }}" method="GET">
+                <div class="form-group-modern-inline">
+                    <label><i class="fas fa-calendar-check"></i> Check-in</label>
+                    <input type="date" name="check_in" required>
+                </div>
+                <div class="form-group-modern-inline">
+                    <label><i class="fas fa-calendar-times"></i> Check-out</label>
+                    <input type="date" name="check_out" required>
+                </div>
+                <div class="form-group-modern-inline">
+                    <label><i class="fas fa-users"></i> Guests</label>
+                    <select name="guests" required>
+                        <option value="1">1 Guest</option>
+                        <option value="2" selected>2 Guests</option>
+                        <option value="3">3 Guests</option>
+                        <option value="4">4+ Guests</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-search-modern">
+                    <i class="fas fa-search"></i>
+                    <span>Search Rooms</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Rooms Section -->
+<section class="featured-rooms-modern">
+    <div class="container">
+        <div class="section-header-modern">
+            <div class="section-badge">Our Rooms</div>
+            <h2 class="section-title-modern">Featured Rooms & Suites</h2>
+            <p class="section-subtitle-modern">Discover our carefully curated selection of luxury accommodations designed for your comfort</p>
+        </div>
+        
+        <div class="rooms-grid-modern">
+            {% for room in rooms %}
+            <div class="room-card-modern reveal">
+                <div class="room-image-modern">
+                    <img src="{{ room.images | from_json | first }}" alt="{{ room.name }}">
+                    <div class="room-overlay-modern">
+                        <a href="{{ url_for('room_detail', room_id=room.id) }}" class="btn-view-details">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                    </div>
+                    <div class="room-badge-top">{{ room.type }}</div>
+                    <div class="room-favorite">
+                        <i class="far fa-heart"></i>
+                    </div>
+                </div>
+                <div class="room-content-modern">
+                    <div class="room-header-modern">
+                        <h3 class="room-title-card">{{ room.name }}</h3>
+                        <div class="room-rating">
+                            <i class="fas fa-star"></i>
+                            <span>4.9</span>
+                        </div>
+                    </div>
+                    <p class="room-description-card">{{ room.description[:100] }}...</p>
+                    <div class="room-features-modern">
+                        <span class="feature-tag"><i class="fas fa-users"></i> {{ room.capacity }} Guests</span>
+                        <span class="feature-tag"><i class="fas fa-wifi"></i> Free WiFi</span>
+                        <span class="feature-tag"><i class="fas fa-concierge-bell"></i> Room Service</span>
+                    </div>
+                    <div class="room-footer-modern">
+                        <div class="room-price-modern">
+                            <span class="price-from">From</span>
+                            <span class="price-amount">${{ "%.0f"|format(room.price) }}</span>
+                            <span class="price-period">/night</span>
+                        </div>
+                        <a href="{{ url_for('booking_select') }}" class="btn-book-modern" style="pointer-events: auto; z-index: 999;">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Book Now</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center reveal">
+            <a href="{{ url_for('rooms') }}" class="btn-view-all-modern">
+                <span>View All Rooms</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Modern Amenities Section -->
+<section class="amenities-modern" id="amenities">
+    <div class="container">
+        <div class="section-header-modern">
+            <div class="section-badge">Premium Services</div>
+            <h2 class="section-title-modern">World-Class Amenities</h2>
+            <p class="section-subtitle-modern">Everything you need for a perfect stay</p>
+        </div>
+        
+        <div class="amenities-grid-modern">
+            <div class="amenity-card-modern reveal">
+                <div class="amenity-icon-modern">
+                    <i class="fas fa-swimming-pool"></i>
+                </div>
+                <h3>Infinity Pool</h3>
+                <p>Relax in our stunning rooftop infinity pool with panoramic city views</p>
+            </div>
+            
+            <div class="amenity-card-modern reveal">
+                <div class="amenity-icon-modern">
+                    <i class="fas fa-spa"></i>
+                </div>
+                <h3>Luxury Spa</h3>
+                <p>Rejuvenate with world-class spa treatments and wellness center</p>
+            </div>
+            
+            <div class="amenity-card-modern reveal">
+                <div class="amenity-icon-modern">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <h3>Fine Dining</h3>
+                <p>Savor gourmet cuisine at our award-winning restaurants</p>
+            </div>
+            
+            <div class="amenity-card-modern reveal">
+                <div class="amenity-icon-modern">
+                    <i class="fas fa-dumbbell"></i>
+                </div>
+                <h3>Fitness Center</h3>
+                <p>State-of-the-art equipment and personal trainers available</p>
+            </div>
+            
+            <div class="amenity-card-modern reveal">
+                <div class="amenity-icon-modern">
+                    <i class="fas fa-concierge-bell"></i>
+                </div>
+                <h3>24/7 Concierge</h3>
+                <p>Our dedicated team is always ready to assist you</p>
+            </div>
+            
+            <div class="amenity-card-modern reveal">
+                <div class="amenity-icon-modern">
+                    <i class="fas fa-parking"></i>
+                </div>
+                <h3>Valet Parking</h3>
+                <p>Complimentary valet parking service for all guests</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modern Testimonials Section -->
+<!-- <section class="testimonials-modern">
+    <div class="container">
+        <div class="section-header-modern">
+            <div class="section-badge">Testimonials</div>
+            <h2 class="section-title-modern">What Our Guests Say</h2>
+            <p class="section-subtitle-modern">Real experiences from real travelers</p>
+        </div>
+        
+        <div class="testimonials-grid-modern">
+            <div class="testimonial-card-modern reveal">
+                <div class="quote-icon">
+                    <i class="fas fa-quote-left"></i>
+                </div>
+                <div class="testimonial-rating-modern">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text-modern">"An absolutely magnificent experience! The attention to detail and the level of service exceeded all expectations. Will definitely return!"</p>
+                <div class="testimonial-author-modern">
+                    <img src="https://i.pravatar.cc/100?img=1" alt="Guest">
+                    <div>
+                        <h4>Sarah Johnson</h4>
+                        <p>New York, USA</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial-card-modern reveal">
+                <div class="quote-icon">
+                    <i class="fas fa-quote-left"></i>
+                </div>
+                <div class="testimonial-rating-modern">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text-modern">"The perfect honeymoon destination! The romantic suite was breathtaking, and the staff made us feel like royalty."</p>
+                <div class="testimonial-author-modern">
+                    <img src="https://i.pravatar.cc/100?img=5" alt="Guest">
+                    <div>
+                        <h4>Michael Chen</h4>
+                        <p>Singapore</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial-card-modern reveal">
+                <div class="quote-icon">
+                    <i class="fas fa-quote-left"></i>
+                </div>
+                <div class="testimonial-rating-modern">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text-modern">"Best family vacation ever! The kids loved the pool, and we loved the spa. Something for everyone!"</p>
+                <div class="testimonial-author-modern">
+                    <img src="https://i.pravatar.cc/100?img=9" alt="Guest">
+                    <div>
+                        <h4>Emma Thompson</h4>
+                        <p>London, UK</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section> -->
+
+<!-- Modern CTA Section -->
+<section class="cta-section-modern">
+    <div class="cta-overlay-modern"></div>
+    <div class="container">
+        <div class="cta-content-modern reveal">
+            <div class="cta-badge">Special Offer</div>
+            <h2>Ready for Your Dream Vacation?</h2>
+            <p>Book now and get 20% off your first stay. Limited time offer!</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('booking_select') }}" class="btn-cta-primary">
+                    <i class="fas fa-calendar-check"></i> Book Your Stay
+                </a>
+                <a href="{{ url_for('rooms') }}" class="btn-cta-secondary">
+                    <i class="fas fa-bed"></i> View Rooms
+                </a>
+            </div>
+            <div class="cta-features">
+                <div class="cta-feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Free Cancellation</span>
+                </div>
+                <div class="cta-feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Best Price Guarantee</span>
+                </div>
+                <div class="cta-feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>24/7 Support</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Hero Slider
+let currentSlideIndex = 0;
+const slides = document.querySelectorAll('.hero-slide');
+const dots = document.querySelectorAll('.dot');
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.classList.remove('active');
+        dots[i].classList.remove('active');
+    });
+    
+    currentSlideIndex = (index + slides.length) % slides.length;
+    slides[currentSlideIndex].classList.add('active');
+    dots[currentSlideIndex].classList.add('active');
+}
+
+function changeSlide(direction) {
+    showSlide(currentSlideIndex + direction);
+}
+
+function currentSlide(index) {
+    showSlide(index);
+}
+
+// Auto-advance slides
+setInterval(() => {
+    changeSlide(1);
+}, 5000);
+
+// Reveal on scroll
+const revealElements = document.querySelectorAll('.reveal');
+const revealOnScroll = () => {
+    revealElements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const windowHeight = window.innerHeight;
+        
+        if (elementTop < windowHeight - 100) {
+            element.classList.add('revealed');
+        }
+    });
+};
+
+window.addEventListener('scroll', revealOnScroll);
+revealOnScroll();
+
+// Set minimum date for booking form
+const today = new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.setAttribute('min', today);
+});
+</script>
+{% endblock %}

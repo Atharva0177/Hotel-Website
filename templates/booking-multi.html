@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Booking - Grand Luxury Hotel{% endblock %}
+
+{% block content %}
+<section class="booking-page">
+    <div class="container">
+        <div class="booking-grid">
+            <div class="booking-form-section">
+                <h1 class="booking-title">Complete Your Booking</h1>
+                <p class="booking-subtitle">You're one step away from your dream vacation</p>
+                
+                <form action="{{ url_for('book_room') }}" method="POST" id="bookingForm" class="booking-form-full">
+                    <input type="hidden" name="rooms_data" id="roomsData">
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-calendar"></i> Stay Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="check_in">Check-in Date *</label>
+                                <input type="date" id="check_in" name="check_in" required readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="check_out">Check-out Date *</label>
+                                <input type="date" id="check_out" name="check_out" required readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-user"></i> Guest Information</h3>
+                        <div class="form-group">
+                            <label for="guest_name">Full Name *</label>
+                            <input type="text" id="guest_name" name="guest_name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="guest_email">Email Address *</label>
+                                <input type="email" id="guest_email" name="guest_email" required placeholder="john@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="guest_phone">Phone Number *</label>
+                                <input type="tel" id="guest_phone" name="guest_phone" required placeholder="+1 (555) 123-4567">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-comment"></i> Special Requests</h3>
+                        <div class="form-group">
+                            <label for="special_requests">Any special requests or requirements?</label>
+                            <textarea id="special_requests" name="special_requests" rows="4" placeholder="Let us know if you have any special requirements..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" required>
+                            <span>I agree to the <a href="#">terms and conditions</a> and <a href="#">cancellation policy</a></span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">
+                        <i class="fas fa-check-circle"></i> Confirm Booking
+                    </button>
+                </form>
+            </div>
+            
+            <div class="booking-summary-section">
+                <div class="booking-summary-card">
+                    <h3>Booking Summary</h3>
+                    
+                    <div id="summaryRooms" class="summary-rooms">
+                        <!-- Rooms will be loaded here -->
+                    </div>
+                    
+                    <div class="summary-details">
+                        <div class="summary-row">
+                            <span><i class="fas fa-calendar-check"></i> Check-in</span>
+                            <span id="displayCheckIn">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span><i class="fas fa-calendar-times"></i> Check-out</span>
+                            <span id="displayCheckOut">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span><i class="fas fa-moon"></i> Nights</span>
+                            <span id="displayNights">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span><i class="fas fa-bed"></i> Total Rooms</span>
+                            <span id="displayRooms">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-divider"></div>
+                    
+                    <div class="summary-pricing">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="priceSubtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Service fee (10%)</span>
+                            <span id="priceServiceFee">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Taxes (8%)</span>
+                            <span id="priceTax">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-divider"></div>
+                    
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span id="priceTotal">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-features">
+                        <div class="feature-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Secure Payment</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-ban"></i>
+                            <span>Free Cancellation</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Instant Confirmation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.summary-rooms {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.summary-room-item {
+    padding: 15px;
+    background: var(--bg-light);
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.summary-room-header {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.summary-room-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.summary-room-info h4 {
+    font-size: 1rem;
+    color: var(--text-dark);
+    margin: 0 0 5px 0;
+}
+
+.summary-room-details {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.summary-room-price {
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-top: 5px;
+}
+</style>
+
+<script>
+// Load booking data from sessionStorage
+const bookingData = JSON.parse(sessionStorage.getItem('bookingData'));
+
+if (!bookingData) {
+    alert('No booking data found. Please select rooms first.');
+    window.location.href = '/booking-select';
+} else {
+    // Populate form
+    document.getElementById('check_in').value = bookingData.check_in;
+    document.getElementById('check_out').value = bookingData.check_out;
+    document.getElementById('displayCheckIn').textContent = bookingData.check_in;
+    document.getElementById('displayCheckOut').textContent = bookingData.check_out;
+    document.getElementById('displayNights').textContent = bookingData.nights;
+    
+    // Count total rooms
+    const totalRooms = bookingData.rooms.reduce((sum, item) => sum + item.quantity, 0);
+    document.getElementById('displayRooms').textContent = totalRooms;
+    
+    // Prepare rooms data for submission
+    const roomsForSubmission = bookingData.rooms.map(item => ({
+        room_id: item.room_id,
+        quantity: item.quantity,
+        guests: item.guests
+    }));
+    document.getElementById('roomsData').value = JSON.stringify(roomsForSubmission);
+    
+    // Display rooms in summary
+    let roomsHTML = '';
+    let subtotal = 0;
+    
+    bookingData.rooms.forEach(item => {
+        const itemTotal = item.room.price * bookingData.nights * item.quantity;
+        subtotal += itemTotal;
+        
+        roomsHTML += `
+            <div class="summary-room-item">
+                <div class="summary-room-header">
+                    <img src="${item.room.images[0]}" alt="${item.room.name}" class="summary-room-img">
+                    <div class="summary-room-info">
+                        <h4>${item.room.name}</h4>
+                        <div class="summary-room-details">
+                            ${item.quantity} room(s) × ${bookingData.nights} night(s)<br>
+                            ${item.guests} guest(s) per room
+                        </div>
+                        <div class="summary-room-price">$${itemTotal.toFixed(2)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('summaryRooms').innerHTML = roomsHTML;
+    
+    // Calculate totals
+    const serviceFee = subtotal * 0.1;
+    const tax = subtotal * 0.08;
+    const total = subtotal + serviceFee + tax;
+    
+    document.getElementById('priceSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('priceServiceFee').textContent = `$${serviceFee.toFixed(2)}`;
+    document.getElementById('priceTax').textContent = `$${tax.toFixed(2)}`;
+    document.getElementById('priceTotal').textContent = `$${total.toFixed(2)}`;
+}
+
+// Form validation
+const bookingForm = document.getElementById('bookingForm');
+if (bookingForm) {
+    bookingForm.addEventListener('submit', function(e) {
+        let isValid = true;
+        const errors = [];
+        
+        // Validate guest name
+        const guestName = document.getElementById('guest_name');
+        if (guestName && guestName.value.trim().length < 2) {
+            errors.push('Please enter a valid name');
+            guestName.style.borderColor = '#ff4d4f';
+            isValid = false;
+        } else if (guestName) {
+            guestName.style.borderColor = '';
+        }
+        
+        // Validate email
+        const guestEmail = document.getElementById('guest_email');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (guestEmail && !emailRegex.test(guestEmail.value)) {
+            errors.push('Please enter a valid email address');
+            guestEmail.style.borderColor = '#ff4d4f';
+            isValid = false;
+        } else if (guestEmail) {
+            guestEmail.style.borderColor = '';
+        }
+        
+        // Validate phone
+        const guestPhone = document.getElementById('guest_phone');
+        const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+        if (guestPhone && (!phoneRegex.test(guestPhone.value) || guestPhone.value.replace(/\D/g, '').length < 10)) {
+            errors.push('Please enter a valid phone number');
+            guestPhone.style.borderColor = '#ff4d4f';
+            isValid = false;
+        } else if (guestPhone) {
+            guestPhone.style.borderColor = '';
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please correct the following errors:\n\n' + errors.join('\n'));
+        } else {
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            }
+            // Clear session storage after successful submission
+            sessionStorage.removeItem('bookingData');
+        }
+    });
+}
+
+// Auto-format phone number
+const phoneInput = document.getElementById('guest_phone');
+if (phoneInput) {
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            if (value.length <= 3) {
+                value = value;
+            } else if (value.length <= 6) {
+                value = '(' + value.slice(0, 3) + ') ' + value.slice(3);
+            } else {
+                value = '(' + value.slice(0, 3) + ') ' + value.slice(3, 6) + '-' + value.slice(6, 10);
+            }
+        }
+        e.target.value = value;
+    });
+}
+</script>
+{% endblock %}

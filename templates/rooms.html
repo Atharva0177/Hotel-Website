@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Our Rooms - Grand Luxury Hotel{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header" style="background-image: url('https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1920');">
+    <div class="page-header-overlay"></div>
+    <div class="container">
+        <h1 class="page-title fade-in-up">Our Rooms & Suites</h1>
+        <p class="page-subtitle fade-in-up delay-1">Find your perfect accommodation</p>
+    </div>
+</section>
+
+<!-- Filter Section -->
+<section class="filter-section">
+    <div class="container">
+        <div class="filter-bar">
+            <div class="filter-label">Filter by type:</div>
+            <div class="filter-buttons">
+                <a href="{{ url_for('rooms', type='all') }}" class="filter-btn {% if current_type == 'all' %}active{% endif %}">
+                    All Rooms
+                </a>
+                <a href="{{ url_for('rooms', type='Standard') }}" class="filter-btn {% if current_type == 'Standard' %}active{% endif %}">
+                    Standard
+                </a>
+                <a href="{{ url_for('rooms', type='Business') }}" class="filter-btn {% if current_type == 'Business' %}active{% endif %}">
+                    Business
+                </a>
+                <a href="{{ url_for('rooms', type='Family') }}" class="filter-btn {% if current_type == 'Family' %}active{% endif %}">
+                    Family
+                </a>
+                <a href="{{ url_for('rooms', type='Suite') }}" class="filter-btn {% if current_type == 'Suite' %}active{% endif %}">
+                    Suites
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Rooms Grid -->
+<section class="rooms-listing">
+    <div class="container">
+        <div class="rooms-grid">
+            {% for room in rooms %}
+            <div class="room-card reveal">
+                <div class="room-image">
+                    <img src="{{ room.images | from_json | first }}" alt="{{ room.name }}" style="opacity: 1;">
+                    <div class="room-overlay">
+                        <a href="{{ url_for('room_detail', room_id=room.id) }}" class="btn btn-secondary">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <span class="room-badge">{{ room.type }}</span>
+                </div>
+                <div class="room-content">
+                    <h3 class="room-title">{{ room.name }}</h3>
+                    <p class="room-description">{{ room.description[:120] }}...</p>
+                    <div class="room-features">
+                        <span><i class="fas fa-users"></i> {{ room.capacity }} Guests</span>
+                        <span><i class="fas fa-bed"></i> Luxury Bed</span>
+                        <span><i class="fas fa-wifi"></i> Free WiFi</span>
+                    </div>
+                    <div class="room-footer">
+                        <div class="room-price">
+                            <span class="price-label">From</span>
+                            <span class="price">${{ "%.2f"|format(room.price) }}</span>
+                            <span class="price-unit">/night</span>
+                        </div>
+                        <a href="{{ url_for('booking_form', room_id=room.id) }}" class="btn btn-primary-outline">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if rooms|length == 0 %}
+        <div class="no-results">
+            <i class="fas fa-search"></i>
+            <h3>No rooms found</h3>
+            <p>Try adjusting your filters</p>
+            <a href="{{ url_for('rooms') }}" class="btn btn-primary">View All Rooms</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+// Reveal on scroll
+const revealElements = document.querySelectorAll('.reveal');
+const revealOnScroll = () => {
+    revealElements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const windowHeight = window.innerHeight;
+        
+        if (elementTop < windowHeight - 100) {
+            element.classList.add('revealed');
+        }
+    });
+};
+
+window.addEventListener('scroll', revealOnScroll);
+revealOnScroll();
+</script>
+{% endblock %}

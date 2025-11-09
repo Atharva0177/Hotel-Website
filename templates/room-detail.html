@@ -1,0 +1,941 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - Grand Luxury Hotel{% endblock %}
+
+{% block content %}
+<!-- Modern Room Gallery with Grid Layout -->
+<section class="modern-room-gallery">
+    <div class="container">
+        <div class="gallery-grid">
+            <!-- Main Large Image -->
+            <div class="gallery-main-box">
+                <img id="mainImage" src="{{ room.images_list[0] }}" alt="{{ room.name }}" class="main-gallery-image">
+            </div>
+            
+            <!-- Thumbnail Grid -->
+            <div class="gallery-thumbnails-grid">
+                {% for image in room.images_list[:3] %}
+                <div class="thumbnail-box" onclick="changeMainImage('{{ image }}', this)">
+                    <img src="{{ image }}" alt="Room view {{ loop.index }}">
+                    <div class="thumbnail-overlay">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Video Thumbnail (if video exists) -->
+                {% if room.videos_list and room.videos_list|length > 0 %}
+                <div class="thumbnail-box video-thumbnail" onclick="openVideoModal()">
+                    <img src="{{ room.images_list[-1] if room.images_list|length > 3 else room.images_list[0] }}" alt="Video Tour">
+                    <div class="video-thumbnail-overlay">
+                        <div class="video-play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                        <span class="video-label">Video Tour</span>
+                    </div>
+                </div>
+                {% else %}
+                <!-- If no video, show 4th image -->
+                {% if room.images_list|length > 3 %}
+                <div class="thumbnail-box" onclick="changeMainImage('{{ room.images_list[3] }}', this)">
+                    <img src="{{ room.images_list[3] }}" alt="Room view 4">
+                    <div class="thumbnail-overlay">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modern Room Details Section -->
+<section class="modern-room-details">
+    <div class="container">
+        <div class="details-wrapper">
+            <!-- Left Column: Room Info -->
+            <div class="room-main-info">
+                <!-- Room Header Card -->
+                <div class="info-card room-header-card">
+                    <div class="room-badge-modern">{{ room.type }}</div>
+                    <h1 class="room-title-modern">{{ room.name }}</h1>
+                    <div class="room-meta-badges">
+                        <span class="meta-badge"><i class="fas fa-users"></i> Up to {{ room.capacity }} Guests</span>
+                        <span class="meta-badge"><i class="fas fa-door-open"></i> {{ room.total_rooms }} Units Available</span>
+                        <span class="meta-badge"><i class="fas fa-star"></i> Premium Room</span>
+                    </div>
+                </div>
+                
+                <!-- Description Card -->
+                <div class="info-card">
+                    <h2 class="section-heading">
+                        <i class="fas fa-align-left"></i>
+                        Description
+                    </h2>
+                    <p class="room-description-modern">{{ room.description }}</p>
+                </div>
+                
+                <!-- Amenities Card -->
+                <div class="info-card">
+                    <h2 class="section-heading">
+                        <i class="fas fa-concierge-bell"></i>
+                        Amenities & Features
+                    </h2>
+                    <div class="amenities-modern-grid">
+                        {% for amenity in room.amenities_list %}
+                        <div class="amenity-modern-item">
+                            <div class="amenity-icon-circle">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>{{ amenity }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Room Info Boxes -->
+                <div class="info-boxes-grid">
+                    <div class="info-box-modern">
+                        <div class="info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="info-content">
+                            <h4>Check-in</h4>
+                            <p>After 3:00 PM</p>
+                        </div>
+                    </div>
+                    <div class="info-box-modern">
+                        <div class="info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="info-content">
+                            <h4>Check-out</h4>
+                            <p>Before 11:00 AM</p>
+                        </div>
+                    </div>
+                    <div class="info-box-modern">
+                        <div class="info-icon">
+                            <i class="fas fa-broom"></i>
+                        </div>
+                        <div class="info-content">
+                            <h4>Housekeeping</h4>
+                            <p>Daily Service</p>
+                        </div>
+                    </div>
+                    <div class="info-box-modern">
+                        <div class="info-icon">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="info-content">
+                            <h4>High-Speed WiFi</h4>
+                            <p>Complimentary</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Booking Sidebar -->
+            <div class="booking-sidebar-modern">
+                <div class="booking-card-modern">
+                    <div class="price-header">
+                        <div class="price-display-large">
+                            <span class="price-amount">${{ "%.2f"|format(room.price) }}</span>
+                            <span class="price-period">/night</span>
+                        </div>
+                        <div class="rating-badge">
+                            <i class="fas fa-star"></i>
+                            <span>4.9</span>
+                        </div>
+                    </div>
+                    
+                    <form id="quickCheckForm" class="booking-form-modern">
+                        <div class="form-group-modern">
+                            <label><i class="fas fa-calendar-check"></i> Check-in</label>
+                            <input type="date" id="checkIn" name="check_in" required>
+                        </div>
+                        <div class="form-group-modern">
+                            <label><i class="fas fa-calendar-times"></i> Check-out</label>
+                            <input type="date" id="checkOut" name="check_out" required>
+                        </div>
+                        <div class="form-group-modern">
+                            <label><i class="fas fa-users"></i> Guests</label>
+                            <select name="guests" required>
+                                {% for i in range(1, room.capacity + 1) %}
+                                <option value="{{ i }}">{{ i }} Guest{% if i > 1 %}s{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div id="priceBreakdown" class="price-calculation" style="display: none;">
+                            <div class="calc-row">
+                                <span>${{ "%.2f"|format(room.price) }} × <span id="numNights">0</span> nights</span>
+                                <span id="subtotal">$0.00</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Service fee</span>
+                                <span id="serviceFee">$0.00</span>
+                            </div>
+                            <div class="calc-divider"></div>
+                            <div class="calc-row total">
+                                <span>Total</span>
+                                <span id="totalPrice">$0.00</span>
+                            </div>
+                        </div>
+                        
+                        <button type="button" onclick="checkAvailability()" class="btn-modern btn-check">
+                            <i class="fas fa-search"></i> Check Availability
+                        </button>
+                        <a href="{{ url_for('booking_select') }}" class="btn-modern btn-book">
+                            <i class="fas fa-calendar-check"></i> Book This Room
+                        </a>
+                    </form>
+                    
+                    <div class="booking-guarantees">
+                        <div class="guarantee-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Best Price Guarantee</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-undo"></i>
+                            <span>Free Cancellation</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Instant Confirmation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Video Modal -->
+{% if room.videos_list and room.videos_list|length > 0 %}
+<div id="videoModal" class="modal-modern">
+    <div class="modal-backdrop" onclick="closeVideoModal()"></div>
+    <div class="modal-content-modern">
+        <button class="modal-close-modern" onclick="closeVideoModal()">
+            <i class="fas fa-times"></i>
+        </button>
+        <iframe id="videoFrame" src="" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    </div>
+</div>
+{% endif %}
+
+<style>
+/* Modern Room Gallery Styles */
+.modern-room-gallery {
+    padding: 100px 0 40px;
+    background: #f8f9fa;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 15px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.gallery-main-box {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    height: 600px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.gallery-main-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+}
+
+.main-gallery-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-thumbnails-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.thumbnail-box {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    height: 143px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.thumbnail-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.thumbnail-box.active {
+    border: 3px solid #e74c3c;
+}
+
+.thumbnail-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.thumbnail-box:hover img {
+    transform: scale(1.1);
+}
+
+.thumbnail-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    color: white;
+    font-size: 24px;
+}
+
+.thumbnail-box:hover .thumbnail-overlay {
+    opacity: 1;
+}
+
+/* Video Thumbnail Styles */
+.video-thumbnail {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.video-thumbnail-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(231, 76, 60, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.video-thumbnail:hover .video-thumbnail-overlay {
+    background: rgba(192, 57, 43, 0.9);
+}
+
+.video-play-button {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e74c3c;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.video-thumbnail:hover .video-play-button {
+    transform: scale(1.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.video-play-button i {
+    margin-left: 3px;
+}
+
+.video-label {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Modern Room Details */
+.modern-room-details {
+    padding: 60px 0;
+    background: white;
+}
+
+.details-wrapper {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 35px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+}
+
+.room-header-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.room-badge-modern {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.room-title-modern {
+    font-size: 2.8rem;
+    margin-bottom: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.room-meta-badges {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.meta-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.section-heading {
+    font-size: 1.6rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+}
+
+.section-heading i {
+    color: #e74c3c;
+    font-size: 1.4rem;
+}
+
+.room-description-modern {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #5a6c7d;
+}
+
+.amenities-modern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.amenity-modern-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.amenity-modern-item:hover {
+    background: #e74c3c;
+    color: white;
+    transform: translateX(5px);
+}
+
+.amenity-icon-circle {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+}
+
+.amenity-modern-item:hover .amenity-icon-circle {
+    background: white;
+    color: #e74c3c;
+}
+
+.info-boxes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.info-box-modern {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 25px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.info-box-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.info-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.info-content h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.info-content p {
+    margin: 5px 0 0;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+/* Modern Booking Sidebar */
+.booking-sidebar-modern {
+    position: relative;
+}
+
+.booking-card-modern {
+    position: sticky;
+    top: 100px;
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: 2px solid #f0f0f0;
+}
+
+.price-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.price-display-large {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.price-amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #e74c3c;
+    line-height: 1;
+}
+
+.price-period {
+    font-size: 1rem;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.rating-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 50px;
+    font-weight: 700;
+}
+
+.booking-form-modern {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group-modern {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group-modern label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-group-modern input,
+.form-group-modern select {
+    padding: 14px;
+    border: 2px solid #e8ecef;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.form-group-modern input:focus,
+.form-group-modern select:focus {
+    outline: none;
+    border-color: #e74c3c;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1);
+}
+
+.price-calculation {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 15px 0;
+}
+
+.calc-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    color: #5a6c7d;
+    font-size: 15px;
+}
+
+.calc-row.total {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 2px solid #e8ecef;
+}
+
+.calc-divider {
+    height: 1px;
+    background: #e8ecef;
+    margin: 12px 0;
+}
+
+.btn-modern {
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.btn-check {
+    background: #f8f9fa;
+    color: #2c3e50;
+    border: 2px solid #e8ecef;
+}
+
+.btn-check:hover {
+    background: #e8ecef;
+    transform: translateY(-2px);
+}
+
+.btn-book {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+.btn-book:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+}
+
+.booking-guarantees {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.guarantee-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: #5a6c7d;
+    font-size: 14px;
+}
+
+.guarantee-item i {
+    color: #52c41a;
+    font-size: 18px;
+}
+
+/* Modern Modal */
+.modal-modern {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content-modern {
+    position: relative;
+    width: 90%;
+    max-width: 1200px;
+    z-index: 10001;
+}
+
+.modal-content-modern iframe {
+    width: 100%;
+    height: 70vh;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close-modern {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-modern:hover {
+    background: #e74c3c;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .gallery-thumbnails-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .thumbnail-box {
+        height: 150px;
+    }
+}
+
+@media (max-width: 992px) {
+    .details-wrapper {
+        grid-template-columns: 1fr;
+    }
+    
+    .booking-card-modern {
+        position: static;
+    }
+    
+    .info-boxes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .gallery-main-box {
+        height: 400px;
+    }
+    
+    .gallery-thumbnails-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .room-title-modern {
+        font-size: 2rem;
+    }
+    
+    .amenities-modern-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+const roomPrice = {{ room.price }};
+const roomId = {{ room.id }};
+
+function changeMainImage(imageSrc, thumbnail) {
+    document.getElementById('mainImage').src = imageSrc;
+    
+    // Remove active class from all thumbnails
+    document.querySelectorAll('.thumbnail-box:not(.video-thumbnail)').forEach(thumb => {
+        thumb.classList.remove('active');
+    });
+    
+    // Add active class to clicked thumbnail
+    if (thumbnail && !thumbnail.classList.contains('video-thumbnail')) {
+        thumbnail.classList.add('active');
+    }
+}
+
+function openVideoModal() {
+    const modal = document.getElementById('videoModal');
+    const videoFrame = document.getElementById('videoFrame');
+    videoFrame.src = '{{ room.videos_list[0] if room.videos_list else "" }}?autoplay=1';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeVideoModal() {
+    const modal = document.getElementById('videoModal');
+    const videoFrame = document.getElementById('videoFrame');
+    videoFrame.src = '';
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Calculate price on date change
+document.getElementById('checkIn').addEventListener('change', calculatePrice);
+document.getElementById('checkOut').addEventListener('change', calculatePrice);
+
+function calculatePrice() {
+    const checkIn = new Date(document.getElementById('checkIn').value);
+    const checkOut = new Date(document.getElementById('checkOut').value);
+    
+    if (checkIn && checkOut && checkOut > checkIn) {
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+        const subtotal = nights * roomPrice;
+        const serviceFee = subtotal * 0.1;
+        const total = subtotal + serviceFee;
+        
+        document.getElementById('numNights').textContent = nights;
+        document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+        document.getElementById('serviceFee').textContent = '$' + serviceFee.toFixed(2);
+        document.getElementById('totalPrice').textContent = '$' + total.toFixed(2);
+        document.getElementById('priceBreakdown').style.display = 'block';
+    }
+}
+
+async function checkAvailability() {
+    const checkIn = document.getElementById('checkIn').value;
+    const checkOut = document.getElementById('checkOut').value;
+    
+    if (!checkIn || !checkOut) {
+        alert('Please select check-in and check-out dates');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/check-availability', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                room_id: roomId,
+                check_in: checkIn,
+                check_out: checkOut,
+                quantity: 1
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.available) {
+            alert('✓ Room is available for your selected dates!\n\n' + data.available_count + ' units available.');
+        } else {
+            alert('✗ Sorry, this room is not available for the selected dates.\n\nAvailable units: ' + data.available_count);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error checking availability. Please try again.');
+    }
+}
+
+// Set minimum date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('checkIn').setAttribute('min', today);
+document.getElementById('checkOut').setAttribute('min', today);
+
+// Set first thumbnail as active
+document.querySelector('.thumbnail-box:not(.video-thumbnail)')?.classList.add('active');
+</script>
+{% endblock %}
