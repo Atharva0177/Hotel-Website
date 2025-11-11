@@ -566,7 +566,19 @@ Please open an issue or a pull request with a clear description and steps to val
 ---
 
 ## License
-No license file is currently included. If you intend to share or deploy this application publicly, consider adding a license (e.g., MIT) at the repository root.
+
+MIT License
+
+```
+MIT License
+
+Copyright (c) 2025 Atharva
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+...
+```
+
+See [LICENSE](LICENSE) for full text.
 
 ---
 
@@ -577,3 +589,4 @@ No license file is currently included. If you intend to share or deploy this app
 ---
 
 Happy building! If you run into issues, see [Troubleshooting](#troubleshooting) or open an issue with logs, steps to reproduce, and environment details.
+
