@@ -36,8 +36,9 @@ def recreate_database():
                     'email': admin.email
                 })
             print(f"📦 Backed up {len(admins_backup)} admin accounts")
-        except:
-            print("⚠️  Creating fresh database...")
+        except Exception as e:
+            db.session.rollback()
+            print(f"⚠️  Starting with fresh database (Reason: {str(e)})")
         
         # Remove old database
         if os.path.exists('hotel.db'):

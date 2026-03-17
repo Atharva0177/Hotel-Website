@@ -11,6 +11,9 @@ This guide explains how to host the Hotel Website on Vercel using Supabase as th
     `postgresql://postgres:[YOUR-PASSWORD]@db.[REF].supabase.co:5432/postgres`
     *Make sure to replace `[YOUR-PASSWORD]` with the password you set during project creation.*
 
+> [!IMPORTANT]
+> **Special Characters in Password**: If your password contains special characters like `@`, you **must** URL-encode them. For example, if your password is `My@Password`, use `My%40Password` in the connection string.
+
 ## 2. Deploy to Vercel
 
 1.  **Push your code** to a GitHub repository.

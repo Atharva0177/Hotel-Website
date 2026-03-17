@@ -8,11 +8,11 @@ import json
 
 app = Flask(__name__)
 # Database configuration
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///hotel.db')
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///hotel.db').strip()
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production').strip()
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -132,6 +132,11 @@ def get_available_rooms(room_id, check_in, check_out):
     available = room.total_rooms - total_booked
     
     return max(0, available)
+
+# Diagnostic Route
+@app.route('/health')
+def health():
+    return "OK - App is running"
 
 # Public Routes
 @app.route('/')
