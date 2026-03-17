@@ -16,6 +16,14 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Optimize for serverless (Vercel)
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_size": 1,
+    "max_overflow": 0,
+    "pool_timeout": 30,
+    "pool_recycle": 1800,
+}
+
 db = SQLAlchemy(app)
 
 # Add custom Jinja2 filter for JSON parsing

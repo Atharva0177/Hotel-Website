@@ -6,10 +6,15 @@ This guide explains how to host the Hotel Website on Vercel using Supabase as th
 
 1.  **Create an account** at [supabase.com](https://supabase.com/).
 2.  **Create a new project** (e.g., "Hotel-Website").
-3.  Go to **Project Settings** > **Database**.
-4.  Copy the **Connection String** (use the **URI** format). It looks like:
-    `postgresql://postgres:[YOUR-PASSWORD]@db.[REF].supabase.co:5432/postgres`
-    *Make sure to replace `[YOUR-PASSWORD]` with the password you set during project creation.*
+4.  Go to **Project Settings** > **Database**.
+5.  Find the **Connection Pooler** section.
+6.  Set the **Mode** to **Transaction**.
+7.  Copy the **Connection String** (URI format). It will use port **6543**.
+    `postgresql://postgres:[YOUR-PASSWORD]@db.[REF].supabase.co:6543/postgres?pgbouncer=true&sslmode=require`
+    *Make sure to replace `[YOUR-PASSWORD]` with your actual password.*
+
+> [!IMPORTANT]
+> **Port 6543 is REQUIRED**: For Vercel, you must use the pooled connection (Port 6543). Using Port 5432 will likely result in a "Cannot assign requested address" error.
 
 > [!IMPORTANT]
 > **Special Characters in Password**: If your password contains special characters like `@`, you **must** URL-encode them. For example, if your password is `My@Password`, use `My%40Password` in the connection string.
