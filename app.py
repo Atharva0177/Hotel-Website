@@ -7,8 +7,13 @@ import os
 import json
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hotel.db'
+# Database configuration
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///hotel.db')
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -40,6 +45,9 @@ class Room(db.Model):
     bookings = db.relationship('Booking', backref='room', lazy=True)
     booking_items = db.relationship('BookingItem', backref='room', lazy=True)
 
+    def __init__(self, **kwargs):
+        super(Room, self).__init__(**kwargs)
+
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     guest_name = db.Column(db.String(100), nullable=False)
@@ -59,6 +67,9 @@ class Booking(db.Model):
     room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=True)
     guests = db.Column(db.Integer, nullable=True)
 
+    def __init__(self, **kwargs):
+        super(Booking, self).__init__(**kwargs)
+
 # NEW: BookingItem model for multiple rooms per booking
 class BookingItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -69,12 +80,18 @@ class BookingItem(db.Model):
     price_per_night = db.Column(db.Float, nullable=False)
     subtotal = db.Column(db.Float, nullable=False)
 
+    def __init__(self, **kwargs):
+        super(BookingItem, self).__init__(**kwargs)
+
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, **kwargs):
+        super(Admin, self).__init__(**kwargs)
 
 # Admin authentication decorator
 def admin_required(f):
@@ -249,7 +266,8 @@ def book_room():
             total_price += subtotal
             
             booking_items_data.append({
-                'room': room,
+                'room_id': room.id,
+                'room_price': room.price,
                 'quantity': item['quantity'],
                 'guests': item['guests'],
                 'subtotal': subtotal
@@ -274,10 +292,10 @@ def book_room():
         for item_data in booking_items_data:
             booking_item = BookingItem(
                 booking_id=booking.id,
-                room_id=item_data['room'].id,
+                room_id=item_data['room_id'],
                 quantity=item_data['quantity'],
                 guests=item_data['guests'],
-                price_per_night=item_data['room'].price,
+                price_per_night=item_data['room_price'],
                 subtotal=item_data['subtotal']
             )
             db.session.add(booking_item)
